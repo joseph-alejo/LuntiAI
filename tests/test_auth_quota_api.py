@@ -22,6 +22,7 @@ PREDICTION_PAYLOAD = {
 
 
 class FakeModel:
+    classes_ = np.array([0, 1, 2])
     def predict(self, features):
         return np.array([0])
 

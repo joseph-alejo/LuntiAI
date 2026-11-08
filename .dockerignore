@@ -4,6 +4,9 @@
 .env.*
 !.env.example
 .tmp
+.serena
+.venv
+.ipynb_checkpoints
 .pytest_cache
 instance
 __pycache__

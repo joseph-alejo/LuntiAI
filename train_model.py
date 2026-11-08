@@ -6,7 +6,7 @@ and saves the model artifacts for production use.
 
 Features:
 - Stratified train/test split (80/20)
-- Hyperparameter-tuned Random Forest (200 estimators)
+- Fixed-configuration Random Forest (200 estimators)
 - Classification report with per-crop metrics
 - Feature importance analysis
 - Model serialization via joblib

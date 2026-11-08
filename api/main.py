@@ -43,6 +43,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import auth
 import database
+from xai import FEATURE_NAMES, explain_prediction
 from barangay_data import TAGUM_BARANGAYS, get_fertilizer_recommendations, get_crop_economics
 from weather_service import get_weather_data
 
@@ -87,6 +88,7 @@ explainer = None
 def load_model():
     """Load trained Random Forest model and label encoder."""
     global model, label_encoder, model_metadata, explainer
+    explainer = None
 
     model_path = os.path.join(MODEL_DIR, "crop_model.pkl")
     encoder_path = os.path.join(MODEL_DIR, "label_encoder.pkl")
@@ -106,7 +108,7 @@ def load_model():
     # Initialize SHAP explainer
     if shap is not None:
         try:
-            explainer = shap.TreeExplainer(model)
+            explainer = shap.TreeExplainer(model, feature_perturbation="tree_path_dependent", model_output="raw")
             print("SHAP explainer initialized.")
         except Exception as e:
             print(f"WARNING: Could not initialize SHAP explainer: {e}")
@@ -180,6 +182,7 @@ class PredictionResponse(BaseModel):
     top_predictions: Optional[list] = None
     fertilizer_recommendations: Optional[list] = None
     shap_explanation: Optional[dict] = None
+    explanation_status: str = "unavailable"
     barangay_info: Optional[dict] = None
     crop_economics: Optional[dict] = None
     crop_category: str = ""
@@ -334,11 +337,7 @@ async def predict_crop(request: PredictionRequest, current_user: dict = Depends(
     if model is None or label_encoder is None:
         raise HTTPException(status_code=503, detail="Model not loaded. Please restart server.")
 
-    features = np.array([
-        request.N, request.P, request.K,
-        request.temperature, request.humidity,
-        request.ph, request.rainfall, request.OM
-    ]).reshape(1, -1)
+    features = np.array([[getattr(request, name) for name in FEATURE_NAMES]])
 
     # Predict
     prediction_encoded = model.predict(features)[0]
@@ -382,29 +381,11 @@ async def predict_crop(request: PredictionRequest, current_user: dict = Depends(
     shap_explanation = None
     if explainer is not None:
         try:
-            # Get SHAP values for the predicted class
-            predicted_class_idx = int(prediction_encoded)
-            shap_values = explainer.shap_values(features)
-            
-            # Extract values for the specific class. shap_values can be a list or a 3D array depending on version
-            if isinstance(shap_values, list):
-                class_shap = shap_values[predicted_class_idx][0]
-            else:
-                class_shap = shap_values[0, :, predicted_class_idx]
-                
-            feature_names = ["N", "P", "K", "Temp", "Humidity", "pH", "Rainfall", "OM"]
-            
-            # Combine names and values, sort by absolute impact
-            impacts = sorted(zip(feature_names, class_shap), key=lambda x: abs(x[1]), reverse=True)
-            
-            shap_explanation = {
-                "top_positive": [
-                    {"feature": feat, "value": float(val)} for feat, val in impacts if val > 0
-                ][:3],
-                "top_negative": [
-                    {"feature": feat, "value": float(val)} for feat, val in impacts if val < 0
-                ][:3],
-            }
+            class_names = label_encoder.inverse_transform(model.classes_)
+            predicted_index = int(np.flatnonzero(model.classes_ == prediction_encoded)[0])
+            shap_explanation = explain_prediction(
+                explainer, features, probabilities, class_names, predicted_index
+            )
         except Exception as e:
             print(f"SHAP calculation error: {e}")
 
@@ -429,6 +410,7 @@ async def predict_crop(request: PredictionRequest, current_user: dict = Depends(
         "top_predictions": top_predictions,
         "fertilizer_recommendations": fertilizer_recs,
         "shap_explanation": shap_explanation,
+        "explanation_status": "available" if shap_explanation is not None else "unavailable",
         "barangay_info": barangay_info,
         "crop_economics": crop_econ,
         "crop_category": metadata["crop_category"],
@@ -496,6 +478,7 @@ async def health_check():
     return {
         "status": "healthy",
         "model_loaded": model is not None,
+        "explanation_available": explainer is not None,
         "label_encoder_loaded": label_encoder is not None,
         "model_accuracy": model_metadata.get("accuracy") if model_metadata else None,
         "supported_crops": list(label_encoder.classes_) if label_encoder is not None else [],

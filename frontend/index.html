@@ -74,7 +74,7 @@
                 </div>
                 <div class="proof-item">
                     <span class="proof-value">85.62%</span>
-                    <span class="proof-label">accuracy</span>
+                    <span class="proof-label">synthetic test accuracy</span>
                 </div>
                 <div class="proof-item">
                     <span class="proof-value">ROI</span>
@@ -182,7 +182,7 @@
                 <aside class="workspace-context" aria-label="Live barangay context">
                     <section class="panel context-panel">
                         <div class="section-heading compact">
-                            <span class="section-kicker">Live context</span>
+                            <span class="section-kicker">Input context</span>
                             <h2>Soil & Weather</h2>
                             <p>Local conditions appear after choosing a barangay.</p>
                         </div>
@@ -191,7 +191,7 @@
                             <div class="context-block">
                                 <div class="block-title">
                                     <i class="fas fa-cloud-sun"></i>
-                                    <span data-i18n="live_cond">Live Conditions</span>
+                                    <span data-i18n="live_cond">Weather Inputs</span>
                                     <small id="weatherSource"></small>
                                 </div>
                                 <div class="data-grid" id="weatherDataGrid"></div>
@@ -208,9 +208,9 @@
                         </div>
 
                         <details class="data-note">
-                            <summary>Data note: barangay averages</summary>
+                            <summary>Data note: presets and synthetic training data</summary>
                             <div data-i18n-html="disclaimer_html">
-                                <strong>How does auto-fill work?</strong> Soil values are barangay-level averages from BSWM regional soil classification data, not exact measurements for a specific plot. If you have lab test results, override the values for higher accuracy.
+                                <strong>How does auto-fill work?</strong> Soil values are editable barangay presets, not measurements of your plot. The model was trained on synthetic data. Field use requires validated inputs and agricultural assessment.
                             </div>
                         </details>
                     </section>
@@ -227,14 +227,14 @@
                             <i class="fas fa-cloud"></i>
                             <div>
                                 <strong>Weather aware</strong>
-                                <span>Live API data falls back to PAGASA climate normals.</span>
+                    <span>Optional live temperature and humidity; monthly rainfall uses a preset.</span>
                             </div>
                         </div>
                         <div class="mini-proof">
                             <i class="fas fa-peso-sign"></i>
                             <div>
-                                <strong>Decision-ready</strong>
-                                <span>Crop output includes ROI and fertilizer guidance.</span>
+                    <strong>Classroom prototype</strong>
+                    <span>Crop scores include explanations and illustrative cost estimates.</span>
                             </div>
                         </div>
                     </section>
@@ -369,11 +369,11 @@
                     </div>
 
                     <aside class="report-side">
-                        <div id="shapSection" data-premium-section></div>
                         <div id="fertilizerSection" data-premium-section></div>
                         <div id="altCropsSection" data-premium-section></div>
                     </aside>
                 </div>
+                <div id="shapSection" aria-live="polite"></div>
             </section>
         </main>
 
@@ -381,7 +381,7 @@
             <p><strong>LuntiAI</strong> — Precision Agriculture for Tagum City</p>
             <div class="footer-tech">
                 <span><i class="fas fa-brain"></i> Random Forest ML</span>
-                <span><i class="fas fa-database"></i> 120K+ data points</span>
+                <span><i class="fas fa-database"></i> 120K synthetic rows</span>
                 <span><i class="fas fa-cloud"></i> Live weather</span>
                 <span><i class="fas fa-map"></i> 23 barangays</span>
             </div>

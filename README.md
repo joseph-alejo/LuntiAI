@@ -32,21 +32,24 @@ and may disappear whenever the Space restarts.
 
 ## What is LuntiAI?
 
-**LuntiAI** (*Luntian* + AI) is a web-based precision agriculture platform
-that helps Filipino farmers make data-driven crop decisions. Simply select your
-barangay, and our AI model recommends the best crop to plant based on your local
-soil profile and live weather conditions.
+**LuntiAI** (*Luntian* + AI) is a classroom crop-classification prototype for
+Tagum City. It uses a Random Forest trained on synthetic crop profiles. Selecting
+a barangay fills editable soil presets and weather inputs; the model ranks crop
+classes and TreeSHAP explains its scores. Field suitability has not been validated.
+
+**Start here:** [Dataset, inference, and XAI defense guide](docs/LUNTIAI_EXPLAINED.md).
+The guide separates source claims, implemented behavior, and measured results.
 
 ### Key Features
 - **Mobile-First UX/UI** — Touch-optimized interface with thumb-zone bottom sheets and responsive breakpoints
-- **Premium Tier Locking** — Blurred UI gating for advanced SHAP and ROI metrics
-- **23 Tagum Barangay Profiles** — Pre-mapped soil data (NPK, OM, pH, soil type)
+- **Demo tiers** — Economic extras and history use demo tiers; complete XAI remains visible to free users
+- **23 Tagum Barangay Profiles** — Editable soil presets, not farm measurements
 - **Live Weather Integration** — Real-time temperature, humidity via OpenWeatherMap
-- **Random Forest ML Model** — 85.62% accuracy, trained on 120,000+ data points
+- **Random Forest ML Model** — 85.62% accuracy on a synthetic test split; 120,000 generated rows total
 - **12 Philippine Crops** — Rice, Banana, Cacao, Coconut, Durian, Corn, Mango, Papaya, Cassava, Sweet Potato, Eggplant, Tomato
 - **Explainable AI (SHAP)** — Understand *why* the AI chose a crop with positive/negative impact factors
 - **UI Localization** — Supports English, Tagalog, and Bisaya
-- **DA-CRA Compliant ROI** — Strictly calibrated to DA Region XI Cost and Return Analysis standards, featuring structured TCP modeling and Wage Order RB XI-24 (₱515/day) adherence
+- **Illustrative economics** — Rule-based cost and return estimates; not validated yield or profit predictions
 - **Confidence Scoring** — Top-5 crop predictions with probability chart
 
 ---
@@ -54,7 +57,7 @@ soil profile and live weather conditions.
 ## Quick Start
 
 ### Prerequisites
-- Python 3.10+
+- Python 3.11 (tested; saved model requires scikit-learn 1.8.0)
 - pip
 
 ### 1. Install Dependencies
@@ -73,11 +76,16 @@ python train_model.py
 ```
 
 ### 4. Run the Server
+
+From the repository root (activate your environment first):
+
 ```bash
-cp .env.example .env
-cd api
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+python -m uvicorn api.main:app --host 127.0.0.1 --port 8000
 ```
+
+On Windows, `./start-local.ps1` uses `.venv` or the existing sibling
+`luntiai-test-env` and starts the same local demo. Copy `.env.example` to `.env`
+only when configuring optional settings; never commit `.env`.
 
 ### 5. Open the App
 - **Frontend:** http://localhost:8000/app
@@ -88,12 +96,51 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 ## Project Structure
 
+### CS 24/L XAI study
+
+The executed notebook is [`notebooks/LuntiAI_ML_and_XAI.ipynb`](notebooks/LuntiAI_ML_and_XAI.ipynb).
+It retrains the existing Random Forest, compares a majority baseline and a shallow
+decision tree, verifies parity with the saved model, and evaluates local and global
+explanations. Run it with Python 3.11:
+
+```bash
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+# macOS/Linux: source .venv/bin/activate
+python -m pip install -r requirements-notebook.txt
+python -m ipykernel install --user --name luntiai-xai --display-name "Python (LuntiAI XAI)"
+```
+
+Open the notebook in a notebook editor, select **Python (LuntiAI XAI)**, and Run All.
+Results and figures are written to `reports/xai/`. Model files are not overwritten.
+The notebook uses the same `api/xai.py` helper as the application.
+
+The app now shows all eight signed TreeSHAP contributions, the baseline and output
+probability, and a decomposition of the score gap against the runner-up. Explanations
+remain visible for free and quota-limited accounts. Missing or older explanations
+receive an explicit message. The frontend uses the backend's origin, so the documented
+port 8000 works without editing JavaScript.
+
+TreeSHAP is **model-specific, post-hoc feature attribution** for numerical tabular
+inputs. Local explanations are class-specific; the notebook aggregates 120
+class-balanced held-out cases for a global diagnostic. Model-agnostic KernelSHAP
+is a notebook comparison, not a deployed endpoint. The experimental interventional
+TreeSHAP comparison in the pinned environment fails the stated numerical tolerance
+and is explicitly excluded from application use. Deployed path-dependent TreeSHAP
+and KernelSHAP have separate required reconstruction checks.
+
+The data are synthetic. Model probabilities and SHAP values do not establish
+farm success, causal effects, fertilizer needs, or validated profitability.
+Run the regression checks from the repository root with `python -m pytest tests -q`.
+
+### Existing application files
+
 ```
 crop-random-forest-model/
 ├── api/
 │   ├── main.py              # FastAPI backend server
 │   ├── barangay_data.py      # 23 Tagum barangay soil profiles
-│   └── weather_service.py    # OpenWeatherMap + PAGASA integration
+│   └── weather_service.py    # OpenWeatherMap + monthly presets
 ├── data/
 │   ├── generate_dataset.py   # Dataset generation script
 │   ├── philippine_crop_dataset.csv  # 120,000-row training data
@@ -121,9 +168,9 @@ crop-random-forest-model/
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/predict` | Predict optimal crop from soil & climate data |
+| POST | `/predict` | Rank crop classes and explain scores from eight numeric inputs |
 | GET | `/barangays` | List all 23 barangay soil profiles |
-| GET | `/weather/{name}` | Live weather for a barangay |
+| GET | `/weather/{name}` | Optional live temperature/humidity and labeled monthly rainfall preset |
 | GET | `/health` | System health check |
 | GET | `/docs` | Interactive Swagger documentation |
 
@@ -141,16 +188,16 @@ build contexts.
 | Backend | FastAPI + Uvicorn |
 | Frontend | HTML5 / CSS3 / Vanilla JS + Chart.js |
 | Weather API | OpenWeatherMap (free tier) |
-| Data Sources | BSWM, PAGASA, PhilRice, DA, PCA |
+| Data provenance | Synthetic generator; broad agricultural references listed in data/sources.md |
 
 ---
 
 ## Model Performance
 
-- **Accuracy:** 85.62%
+- **Synthetic held-out accuracy:** 85.62% (24,000 test rows; not field accuracy)
 - **Top Features:** Potassium (K), Nitrogen (N), Rainfall, Organic Matter (OM)
-- **Training Data:** 120,000 samples across 12 Philippine crops (8 features)
-- **Methodology:** Domain-constrained synthetic data from BSWM/PAGASA/DA sources
+- **Dataset:** 120,000 synthetic rows; 96,000 training and 24,000 test rows, 12 crops, 8 inputs
+- **Methodology:** Clipped normal sampling from hand-coded crop profiles; source claims require independent validation
 
 ---
 
@@ -163,6 +210,7 @@ Technopreneurship Course — Academic Festival 2026
 
 ## License
 
-This project is for academic purposes. All agricultural data ranges are derived
-from publicly available Philippine government sources (BSWM, PAGASA, DA, PhilRice, PCA).
+This project is for academic purposes. Source notes record the original agricultural
+references; they do not establish a verified source for every numeric assumption.
+No field validity or third-party dataset license is implied by those citations.
 

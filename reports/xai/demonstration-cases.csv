@@ -1,0 +1,4 @@
+case,dataset_row,true_crop,predicted_crop,probability,runner_up,gap,largest_attribution_feature,reconstruction_error
+Correct example,97652,Durian,Durian,0.6607869126693976,Banana,0.43451736412584085,rainfall,4.473157955153795e-14
+Incorrect example,83033,Rice,Corn,0.4482669126826174,Rice,0.06301723670527154,K,4.356237592872958e-14
+Smallest top-two margin,19333,Banana,Banana,0.46052335239749703,Papaya,1.107148677403913e-06,N,5.5844218138645374e-14

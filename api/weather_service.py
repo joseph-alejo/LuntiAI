@@ -2,7 +2,7 @@
 LuntiAI — Weather Service
 ===========================
 Fetches real-time weather data from OpenWeatherMap API
-with fallback to PAGASA climate normals for Tagum City.
+with fallback to hard-coded monthly climate presets for the classroom demo.
 
 Author: LuntiAI Team
 """
@@ -10,8 +10,8 @@ Author: LuntiAI Team
 import os
 import requests
 
-# PAGASA Climate Normals for Tagum City / Davao del Norte
-# Source: PAGASA Climatological Normals (1991-2020), Davao City station
+# Monthly classroom presets for Tagum City / Davao del Norte
+# Original attribution: PAGASA 1991-2020, Davao; exact table not independently verified.
 # Monthly averages — used as fallback when API is unavailable
 TAGUM_CLIMATE_NORMALS = {
     1:  {"temp": 27.0, "humidity": 82, "rainfall": 130, "description": "Warm, moderate rain"},
@@ -33,7 +33,7 @@ def get_weather_data(lat: float, lon: float, api_key: str = None) -> dict:
     """
     Fetch current weather data for given coordinates.
 
-    Tries OpenWeatherMap API first, falls back to PAGASA normals.
+    Tries OpenWeatherMap API first, falls back to monthly presets.
 
     Returns:
         dict with keys: temp, humidity, rainfall_estimate, description, source
@@ -42,7 +42,7 @@ def get_weather_data(lat: float, lon: float, api_key: str = None) -> dict:
         try:
             return _fetch_openweather(lat, lon, api_key)
         except Exception as e:
-            print(f"Weather API error: {e}. Using PAGASA fallback.")
+            print(f"Weather API unavailable ({type(e).__name__}); using monthly presets.")
             return _get_pagasa_fallback()
     else:
         return _get_pagasa_fallback()
@@ -89,13 +89,15 @@ def _fetch_openweather(lat: float, lon: float, api_key: str) -> dict:
         "rainfall_estimate": rainfall_estimate,
         "current_rain_1h_mm": round(rain_1h, 1),
         "description": description,
-        "source": "OpenWeatherMap (Live)",
+        "source": "OpenWeatherMap (current temperature and humidity)",
+        "rainfall_source": "Monthly climate preset",
+        "is_live": True,
         "icon": data["weather"][0].get("icon", "01d") if data.get("weather") else "01d",
     }
 
 
 def _get_pagasa_fallback() -> dict:
-    """Return PAGASA climate normals for current month."""
+    """Return monthly climate presets for current month."""
     import datetime
     month = datetime.datetime.now().month
     normal = TAGUM_CLIMATE_NORMALS.get(month, TAGUM_CLIMATE_NORMALS[1])
@@ -106,6 +108,8 @@ def _get_pagasa_fallback() -> dict:
         "rainfall_estimate": normal["rainfall"],
         "current_rain_1h_mm": 0,
         "description": normal["description"],
-        "source": "PAGASA Climate Normals (1991-2020)",
+        "source": "Monthly climate preset (offline)",
+        "rainfall_source": "Monthly climate preset",
+        "is_live": False,
         "icon": "02d",
     }

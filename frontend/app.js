@@ -8,9 +8,7 @@
 // =============================================================================
 // CONFIG
 // =============================================================================
-const API_BASE = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
-    ? 'http://localhost:8080'
-    : '';  // Relative path for deployed version
+const API_BASE = ''; // The backend also serves this frontend on the same origin.
 const AUTH_TOKEN_KEY = 'luntiai-token';
 const AUTH_USER_KEY = 'luntiai-user';
 const AUTH_QUOTA_KEY = 'luntiai-quota';
@@ -62,7 +60,17 @@ const I18N = {
         label_om:           'Organic Matter (OM)',
         hint_om:            '% of soil weight (0–15%)',
         btn_predict:        'Get Crop Recommendation',
-        pred_confidence:    'Prediction Confidence',
+        pred_confidence: "Model class probability",
+        xai_base: "Baseline",
+        xai_change: "Total contribution",
+        xai_output: "Model output",
+        xai_features: "All eight input contributions",
+        xai_units: "Values are percentage points (pp). Bar length shows contribution size.",
+        xai_limit: "These explain this model on synthetic data. They do not establish causes or prescribe farming actions.",
+        xai_compare: "Why this crop over",
+        xai_gap: "Probability gap",
+        xai_gap_note: "The differences below reconstruct the gap between the two class probabilities.",
+        xai_old: "This saved prediction has an older explanation. Run a new prediction for the complete breakdown.",
         shap_title:         'AI Explanation — Why this crop?',
         shap_positive:      'Factors that support this recommendation:',
         shap_negative:      'Limiting factors to manage:',
@@ -106,9 +114,9 @@ const I18N = {
         hero_desc:          'Based on your soil and climate conditions',
         footer_built:       'Built for the Technopreneurship Academic Festival 2026',
         scroll_explore:     'Explore below',
-        live_cond:          'Live Conditions',
+        live_cond:          'Weather Inputs',
         soil_prof:          'Soil Profile',
-        disclaimer_html:    '<strong>How does auto-fill work?</strong> Soil values are barangay-level averages from BSWM regional soil classification data, not exact measurements for a specific plot. Soil can vary within one barangay due to elevation, drainage, and land-use history. If you have lab test results, override the values for higher accuracy.',
+        disclaimer_html: "<strong>Where do these inputs come from?</strong> Soil auto-fill uses illustrative barangay presets stored in this project, not a soil test for your plot. Temperature and humidity may come from OpenWeatherMap when available. Rainfall is a monthly climate preset, not a measured current total. You can edit all eight inputs. The crop model was trained on synthetic profiles, so these recommendations are a classroom demonstration rather than field-validated advice.",
         msg_prefix:         'Based on your soil and climate conditions,',
         msg_suffix:         'is the recommended crop.',
     },
@@ -124,7 +132,17 @@ const I18N = {
         label_om:           'Organikong Bagay (OM)',
         hint_om:            '% ng timbang ng lupa (0–15%)',
         btn_predict:        'Kumuha ng Rekomendasyon ng Pananim',
-        pred_confidence:    'Antas ng Kumpiyansa ng Hula',
+        pred_confidence: "Probabilidad ng klase sa modelo",
+        xai_base: "Batayang halaga",
+        xai_change: "Kabuuang ambag",
+        xai_output: "Output ng modelo",
+        xai_features: "Ambag ng lahat ng walong input",
+        xai_units: "Ang mga halaga ay percentage points (pp). Ipinapakita ng haba ng bar ang laki ng ambag.",
+        xai_limit: "Paliwanag ito ng modelo gamit ang sintetikong datos. Hindi ito patunay ng sanhi o payo sa pagsasaka.",
+        xai_compare: "Bakit ito sa halip na",
+        xai_gap: "Agwat ng probabilidad",
+        xai_gap_note: "Binubuo ng mga pagkakaiba sa ibaba ang agwat ng probabilidad ng dalawang klase.",
+        xai_old: "Luma ang paliwanag ng naka-save na hula. Gumawa ng bagong hula para sa kumpletong paliwanag.",
         shap_title:         '🧠 Paliwanag ng AI — Bakit ito ang pananim?',
         shap_positive:      '✅ Mga salik na sumusuporta sa rekomendasyong ito:',
         shap_negative:      '⚠️ Mga limitadong salik (pag-isipang pamahalaan ito):',
@@ -168,9 +186,9 @@ const I18N = {
         hero_desc:          'Batay sa kondisyon ng lupa at klima mo',
         footer_built:       'Ginawa para sa Technopreneurship Academic Festival 2026',
         scroll_explore:     'I-explore sa ibaba',
-        live_cond:          'Kasulukuyang Panahon',
+        live_cond:          'Datos ng Panahon',
         soil_prof:          'Profile ng Lupa',
-        disclaimer_html:    '<strong>Paano gumagana ang auto-fill?</strong> Ang mga halaga ng lupa ay <em>average sa antas ng barangay</em> mula sa data ng BSWM — hindi eksaktong sukat para sa partikular na lote mo. Maaaring mag-iba ang lupa sa loob ng iisang barangay dahil sa elebasyon at daloy ng tubig. Ang mga average na ito ay nagbibigay ng <strong>maaasahang panimulang punto</strong> (±15-20% ng aktwal). Kung may resulta ka sa lab, palitan ang mga halaga para sa mas tumpak na resulta. <span class="disclaimer-future"><i class="fas fa-microchip"></i> Hinaharap: Ang mga IoT sensor ay magbibigay ng eksaktong katumpakan sa lote.</span>',
+        disclaimer_html: "<strong>Saan galing ang mga input?</strong> Ang auto-fill ng lupa ay mga halimbawang preset ng barangay sa proyektong ito, hindi soil test ng iyong lote. Maaaring galing sa OpenWeatherMap ang temperatura at halumigmig kapag available. Ang ulan ay buwanang climate preset, hindi kasalukuyang nasukat na kabuuan. Puwedeng baguhin ang walong input. Sinanay ang modelo sa sintetikong datos para sa demonstrasyon sa klase; hindi pa ito nasusuri sa aktuwal na bukid.",
         msg_prefix:         'Batay sa kondisyon ng lupa at klima mo, ang',
         msg_suffix:         'ay ang inirerekomendang pananim.',
         'Balanced Nutrients ✅': 'Timbang na Sustansya ✅',
@@ -205,7 +223,17 @@ const I18N = {
         label_om:           'Organikong Butang (OM)',
         hint_om:            '% sa timbang sa yuta (0–15%)',
         btn_predict:        'Kuhaon ang Rekomendasyon sa Pananom',
-        pred_confidence:    'Antas sa Pagsalig sa Hulaan',
+        pred_confidence: "Probabilidad sa klase sa modelo",
+        xai_base: "Basihang bili",
+        xai_change: "Kinatibuk-ang kontribusyon",
+        xai_output: "Output sa modelo",
+        xai_features: "Kontribusyon sa tanang walo ka input",
+        xai_units: "Ang mga bili kay percentage points (pp). Ang gitas-on sa bar nagpakita sa kadako sa kontribusyon.",
+        xai_limit: "Katin-awan kini sa modelo gamit ang sintetikong datos. Dili kini pamatuod sa hinungdan o tambag sa pagpanguma.",
+        xai_compare: "Nganong kini imbes nga",
+        xai_gap: "Kal-ang sa probabilidad",
+        xai_gap_note: "Ang mga kalainan sa ubos naglangkob sa kal-ang sa probabilidad sa duha ka klase.",
+        xai_old: "Karaan ang katin-awan niini. Paghimo og bag-ong prediksyon alang sa kompleto nga detalye.",
         shap_title:         '🧠 Katin-awan sa AI — Nganong kini nga pananom?',
         shap_positive:      '✅ Mga hinungdan nga nagsuporta sa rekomendasyon:',
         shap_negative:      '⚠️ Mga limitasyon (hunahunaa ang pagdumala niini):',
@@ -249,9 +277,9 @@ const I18N = {
         hero_desc:          'Base sa kondisyon sa imong yuta ug klima',
         footer_built:       'Gihimo para sa Technopreneurship Academic Festival 2026',
         scroll_explore:     'Tan-awa sa ubos',
-        live_cond:          'Kasamtangang Panahon',
+        live_cond:          'Datos sa Panahon',
         soil_prof:          'Profile sa Yuta',
-        disclaimer_html:    '<strong>Giunsa pag-obra ang auto-fill?</strong> Ang mga value sa yuta kay <em>average sa matag barangay</em> gikan sa datos sa BSWM — dili eksakto sa imong kaugalingong yuta. Ang yuta pwede magkalahi sa usa ka barangay tungod sa porma sa yuta ug agianan sa tubig. Kining mga average muhatag nimog <strong>kasaligan nga basehan</strong> (±15-20% sa tinuod). Kung duna kay resulta sa lab, usba ang mga value ubos para mas ensakto. <span class="disclaimer-future"><i class="fas fa-microchip"></i> Sa Unahan: Ang mga IoT sensor muhatag og mas eksaktong datos sa matag luna.</span>',
+        disclaimer_html: "<strong>Asa gikan ang mga input?</strong> Ang auto-fill sa yuta kay mga pananglit nga preset sa barangay sulod niini nga proyekto, dili soil test sa imong luna. Ang temperatura ug humidity mahimong gikan sa OpenWeatherMap kung available. Ang ulan kay binulan nga climate preset, dili karong nasukod nga total. Mausab ang tanang walo ka input. Gibansay ang modelo sa sintetikong datos alang sa demonstrasyon sa klase; wala pa kini masulayi sa aktuwal nga uma.",
         msg_prefix:         'Base sa kondisyon sa imong yuta ug klima, ang',
         msg_suffix:         'maoy girekomenda nga pananom.',
         'Balanced Nutrients ✅': 'Balanse nga Nutrisyon ✅',
@@ -952,7 +980,7 @@ barangaySelect.addEventListener('change', async () => {
 });
 
 function renderWeatherData(weather) {
-    weatherSource.textContent = weather.source || '';
+    weatherSource.textContent = [weather.source, weather.rainfall_source ? 'Rainfall: ' + weather.rainfall_source : ''].filter(Boolean).join(' · ');
     weatherDataGrid.innerHTML = `
         <div class="data-card">
             <span class="data-card-icon"><i class="fas fa-temperature-half"></i></span>
@@ -978,7 +1006,7 @@ function renderWeatherData(weather) {
 }
 
 function renderWeatherFallback() {
-    weatherSource.textContent = 'PAGASA Climate Normals';
+    weatherSource.textContent = 'Offline demo defaults';
     weatherDataGrid.innerHTML = `
         <div class="data-card">
             <span class="data-card-icon"><i class="fas fa-temperature-half"></i></span>
@@ -1324,56 +1352,38 @@ function renderResults(result) {
 
 function renderShapExplanation(shap) {
     if (!shapSection) return;
-    if (!shap) {
-        shapSection.innerHTML = '';
+    const heading = `<div class="generated-heading"><i class="fas fa-brain" aria-hidden="true"></i><span>${t('shap_title')}</span></div>`;
+    if (!shap || !Array.isArray(shap.contributions)) {
+        shapSection.innerHTML = `<div class="shap-card">${heading}<p>${t(shap ? 'xai_old' : 'shap_no_data')}</p></div>`;
         return;
     }
-
-    const positives = shap.top_positive || [];
-    const negatives = shap.top_negative || [];
-
-    const featureLabels = {
-        'N': 'Nitrogen (N)', 'P': 'Phosphorus (P)', 'K': 'Potassium (K)',
-        'Temp': 'Temperature', 'Humidity': 'Humidity', 'pH': 'pH Level',
-        'Rainfall': 'Rainfall', 'OM': 'Organic Matter',
+    const labels = {N: 'label_n', P: 'label_p', K: 'label_k', temperature: 'label_temp', humidity: 'label_hum', ph: 'label_ph', rainfall: 'label_rainfall', OM: 'label_om'};
+    const units = {N: 'mg/kg', P: 'mg/kg', K: 'mg/kg', temperature: '°C', humidity: '%', ph: '', rainfall: 'mm/month', OM: '%'};
+    const pp = value => `${value >= 0 ? '+' : ''}${(value * 100).toFixed(2)} pp`;
+    const pct = value => `${(value * 100).toFixed(2)}%`;
+    const rows = (field) => {
+        const maximum = Math.max(...shap.contributions.map(f => Math.abs(f[field])), Number.EPSILON);
+        return shap.contributions.map(f => `<div class="shap-bar-row">
+            <span class="shap-feature">${escapeHTML(t(labels[f.feature]) || f.feature)}: ${escapeHTML(String(f.input_value))} ${units[f.feature] || ''}</span>
+            <div class="shap-bar-wrap" aria-hidden="true"><div class="shap-bar ${f[field] >= 0 ? 'shap-pos' : 'shap-neg'}" style="width:${Math.abs(f[field]) / maximum * 100}%"></div></div>
+            <span class="shap-val ${f[field] >= 0 ? 'pos' : 'neg'}">${pp(f[field])}</span>
+        </div>`).join('');
     };
-
-    const fmt = (v) => (v >= 0 ? '+' : '') + v.toFixed(4);
-
-    const posHTML = positives.length > 0
-        ? positives.map(f => `
-            <div class="shap-bar-row">
-                <span class="shap-feature">${featureLabels[f.feature] || f.feature}</span>
-                <div class="shap-bar-wrap">
-                    <div class="shap-bar shap-pos" style="width:${Math.min(Math.abs(f.value) * 1200, 100)}%"></div>
-                </div>
-                <span class="shap-val pos">${fmt(f.value)}</span>
-            </div>`).join('')
-        : `<div class="shap-none">—</div>`;
-
-    const negHTML = negatives.length > 0
-        ? negatives.map(f => `
-            <div class="shap-bar-row">
-                <span class="shap-feature">${featureLabels[f.feature] || f.feature}</span>
-                <div class="shap-bar-wrap">
-                    <div class="shap-bar shap-neg" style="width:${Math.min(Math.abs(f.value) * 1200, 100)}%"></div>
-                </div>
-                <span class="shap-val neg">${fmt(f.value)}</span>
-            </div>`).join('')
-        : `<div class="shap-none">—</div>`;
-
-    shapSection.innerHTML = `
-        <div class="shap-card">
-            <div class="generated-heading">
-                <i class="fas fa-brain"></i>
-                <span>${t('shap_title')}</span>
-            </div>
-            <p class="shap-label">${t('shap_positive')}</p>
-            ${posHTML}
-            <p class="shap-label">${t('shap_negative')}</p>
-            ${negHTML}
-        </div>
-    `;
+    const total = shap.contributions.reduce((sum, f) => sum + f.value, 0);
+    const alt = shap.alternative;
+    shapSection.innerHTML = `<div class="shap-card">
+        ${heading}
+        <p><strong>TreeSHAP · ${escapeHTML(shap.explained_class)}</strong></p>
+        <p class="shap-summary">${t('xai_base')}: ${pct(shap.base_value)} + ${t('xai_change')}: ${pp(total)} = ${t('xai_output')}: ${pct(shap.prediction_value)}</p>
+        <p class="shap-label">${t('xai_features')}</p>
+        <p class="shap-note">${t('xai_units')}</p>
+        ${rows('value')}
+        <details class="shap-comparison"><summary>${t('xai_compare')} ${escapeHTML(alt.class)}?</summary>
+            <p>${escapeHTML(shap.explained_class)} ${pct(shap.prediction_value)} − ${escapeHTML(alt.class)} ${pct(alt.prediction_value)}; ${t('xai_gap')}: ${pp(alt.probability_gap)}. ${t('xai_base')}: ${pp(alt.base_gap)}.</p>
+            <p class="shap-note">${t('xai_gap_note')}</p>${rows('difference')}
+        </details>
+        <p class="shap-note">${t('xai_limit')}</p>
+    </div>`;
 }
 
 function renderChart(predictions) {

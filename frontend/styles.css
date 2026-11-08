@@ -1435,7 +1435,7 @@ fieldset:last-of-type {
 
 .shap-bar {
     height: 100%;
-    min-width: 4px;
+    min-width: 0;
     border-radius: inherit;
 }
 
@@ -1816,3 +1816,8 @@ fieldset:last-of-type {
         transition-duration: 0.001ms !important;
     }
 }
+
+.shap-summary, .shap-note { line-height: 1.6; overflow-wrap: anywhere; }
+.shap-note { font-size: 0.9rem; color: var(--ink-soft); }
+.shap-comparison { margin-top: 1.25rem; }
+.shap-comparison summary { cursor: pointer; font-weight: 800; }

@@ -7,18 +7,20 @@ LuntiAI crop recommendation model.
 
 ## Methodology: Domain-Constrained Synthetic Data Generation
 
-Since no publicly available CSV dataset exists with Philippine-specific crop-soil
-data, we employed **synthetic data generation** — a widely accepted technique in
-data science and machine learning when primary field data collection is infeasible.
+This project uses **synthetic data generation** for its classroom prototype.
+The records are not field measurements. The references below record the original
+project's source claims; their inclusion does not independently validate each
+range, correlation, or generated crop label.
 
 ### How It Works
 1. **Expert Knowledge Extraction**: We collected optimal growing condition ranges
    (NPK, pH, temperature, humidity, rainfall) for 12 Philippine crops from
    authoritative government and research sources.
-2. **Truncated Normal Distribution Sampling**: For each crop-feature pair, we
-   generate data points using truncated normal distributions centered on the
-   optimal values, with realistic standard deviations.
-3. **Realistic Correlations**: We introduce domain-validated correlations:
+2. **Clipped Normal Sampling**: For each crop-feature pair, the generator samples
+   a normal distribution, clips values to the profile bounds, and adds small
+   boundary jitter. Despite the helper name `truncated_normal`, this is not
+   sampling from a mathematically truncated normal distribution.
+3. **Assumed Correlations**: The generator introduces correlations:
    - Rainfall ↔ pH (inverse: more rain → more acidic soil from base leaching)
    - Temperature ↔ Humidity (positive: tropical coupling)
    - Seasonal variation noise on rainfall values
@@ -124,10 +126,14 @@ data science and machine learning when primary field data collection is infeasib
 ## Dataset Statistics
 - **Total samples**: 120,000
 - **Crops**: 12
-- **Features**: 7 (N, P, K, temperature, humidity, ph, rainfall)
-- **Distribution**: Slightly imbalanced to reflect actual crop prevalence in Davao del Norte
+- **Features**: 8 (N, P, K, temperature, humidity, ph, rainfall, OM)
+- **Distribution**: Slightly imbalanced by generator design; not a measured prevalence estimate
 
 ## Limitations & Future Work
+The October 30, 2026 course notebook documents the split, provenance limitations,
+and XAI evaluation. Its synthetic holdout scores do not establish farm performance.
+Rainfall period, nutrient measurement protocols, and reference ranges require
+independent verification before use with field measurements.
 1. Synthetic data approximates real-world distributions but cannot capture all
    microclimate and soil heterogeneity within individual barangays
 2. Future iterations should incorporate actual field measurements from the
