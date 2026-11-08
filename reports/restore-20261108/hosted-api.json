@@ -1,0 +1,28 @@
+{
+  "base_url": "https://owaruurawo-luntiai-crop-model.hf.space",
+  "checked_at_utc": "2026-11-08T06:27:25Z",
+  "checks": [
+    "model health",
+    "frontend delivered",
+    "barangay and weather endpoints",
+    "prediction requires login",
+    "register login and profile",
+    "invalid inputs rejected",
+    "real model prediction and daily quota",
+    "complete class and runner-up reconstruction under quota",
+    "premium redemption and prediction history",
+    "disposable account removed"
+  ],
+  "weather": {
+    "source": "OpenWeatherMap (current temperature and humidity)",
+    "rainfall_source": "Monthly climate preset",
+    "is_live": true,
+    "rainfall_estimate": 170
+  },
+  "prediction": {
+    "crop": "Banana",
+    "probability_percent": 99.21,
+    "complete_xai": true,
+    "max_additivity_error": 4.260480856999038e-14
+  }
+}
